@@ -1,0 +1,4 @@
+
+class Constant {
+    public static final String CHECKER_NAME = "ViewCacheChecker"
+}

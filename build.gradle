@@ -1,7 +1,7 @@
 plugins {
     id 'groovy'
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.16'
+    id 'maven'
 }
 
 group 'com.ggdsn'
@@ -14,19 +14,18 @@ repositories {
 }
 
 dependencies {
-    compile 'org.codehaus.groovy:groovy-all:2.3.11'
-    compile 'com.android.tools.build:gradle:2.1.3'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-}
+    compile 'org.codehaus.groovy:groovy:2.4.7'
+    compile 'com.google.gradle:osdetector-gradle-plugin:1.6.2'
 
-// See https://github.com/JetBrains/gradle-intellij-plugin/
-intellij {
-    version '192.7142.36'
-    type 'IC'              // Use IntelliJ IDEA CE because it's the basis of the IntelliJ Platform
-    plugins 'android'
-}
-patchPluginXml {
-    changeNotes """
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>"""
+    compile 'com.android.tools.build:gradle:2.1.3'
+    compile 'com.android.tools.build:transform-api:1.5.0'
+    implementation("com.google.guava:guava:28.2-android")
+    compile 'commons-io:commons-io:2.5'
+
+    compile 'org.javassist:javassist:3.26.0-GA'
+
+    compile gradleApi()
+    compile localGroovy()
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
 }

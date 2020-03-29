@@ -1,0 +1,68 @@
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.gradle.api.Task
+import com.android.build.gradle.AppExtension
+
+public class ViewCacheCleanerPlugin implements Plugin<Project> {
+
+    @Override
+    public void apply(Project project) {
+        def android = project.extensions.getByType(AppExtension)
+
+        def transform = new ViewCacheCleanerTransform(project)
+        // 将 transform 注册到 android
+        android.registerTransform(transform)
+
+        registerFileGenerateTask(project, android)
+    }
+
+    /**
+     * 注册生成检查器类的task
+     * @param project
+     * @param android
+     */
+    private static void registerFileGenerateTask(Project project, def android) {
+        project.afterEvaluate {
+            android.applicationVariants.all { v ->
+                def variantName = v.name.capitalize()
+                Task generateTask = project.tasks.findByName(variantName)
+                if (generateTask != null) {
+                    return
+                }
+                generateTask = project.tasks.create("generate${variantName}${Constant.CHECKER_NAME}", DefaultTask)
+
+                def outputDir = new File(project.buildDir, "generated" + File.separator + "source" + File.separator
+                        + Constant.CHECKER_NAME + File.separator + v.name)
+
+                def checkerFile = new File(outputDir, Constant.CHECKER_PATH + ".java")
+                v.registerJavaGeneratingTask(generateTask, outputDir)
+
+                generateTask.doLast {
+                    def parentDir = checkerFile.getParentFile()
+                    if (!parentDir.exists() && !parentDir.mkdirs()) {
+                        throw new IOException("Can not mkdirs the dir: " + parentDir)
+                    }
+
+                    if (checkerFile.exists()) {
+                        checkerFile.delete()
+                    }
+                    checkerFile.createNewFile()
+
+                    def javaFileStream = getClass().getClassLoader().getResourceAsStream(Constant.CHECKER_NAME + ".java")
+                    def reader = new BufferedReader(new InputStreamReader(javaFileStream))
+
+                    def writer = new FileWriter(checkerFile)
+                    def lineBreaker = System.getProperty("line.separator")
+                    reader.lines().forEach { line ->
+                        writer.write(line)
+                        writer.write(lineBreaker)
+                    }
+                    writer.flush()
+                    writer.close()
+                    reader.close()
+                    println "generate${variantName}${Constant.CHECKER_NAME}Task put ${Constant.CHECKER_NAME} at ${checkerFile.absolutePath}"
+                }
+            }
+        }
+    }
+}
